@@ -3,3 +3,14 @@
 @media(min-width:760px) and (min-height:750px){main{height:100svh}.chat{max-height:none}.conversation-layout{max-height:calc(100svh - 190px)}}
 @media(max-width:759px){main{padding:0 20px;max-width:500px}header{height:100px}.brand strong{font-size:39px}.brand>span{font-size:17px}.access-label{font-size:10px}.header-actions{gap:10px}.conversation-layout{display:flex;flex-direction:column;gap:15px;padding-top:12px}.companion{flex:1}.welcome-bubble{width:88%;padding:14px 18px}.welcome-bubble p{font-size:17px}.cat-scene{height:clamp(220px,calc(100svh - 435px),450px);margin:8px 0}.record-button{width:90px;height:90px}.secondary-control{width:46px;height:46px}.chat{display:none}.has-conversation .chat{display:flex;min-height:330px;max-height:460px}.has-conversation .cat-scene{height:210px}.has-conversation .welcome-bubble{display:none}.has-conversation .conversation-layout{gap:24px}.has-conversation .control-caption{margin-bottom:0}.has-conversation .connection-state{margin-top:8px}nav{gap:0;justify-content:space-around;margin-left:-20px;margin-right:-20px;position:sticky;bottom:0;z-index:3}.control-caption{margin:12px 0 7px}.information{padding:20px 0}.stats{gap:10px}.stats>div{padding:15px}.messages{padding:15px}.error{position:relative;z-index:4}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Current spoken reply, beside the character on desktop and mobile. */
+.speech-bubble{position:relative;display:flex;align-items:flex-start;gap:14px;z-index:1;width:85%;max-width:340px;padding:16px 20px;background:#fff0f5;color:#651e36;border-radius:22px;box-shadow:0 5px 24px #1b1c2a12;animation:speech-appear 160ms ease-out}
+.speech-bubble::after{content:'';position:absolute;bottom:-10px;left:65%;border-top:13px solid #fff0f5;border-right:13px solid transparent}
+.speech-bubble p{flex:1;min-width:0;max-height:132px;overflow:auto;scrollbar-width:thin;scrollbar-color:#d988a3 #fff0f5;margin:0;font-size:17px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.speech-bubble p::selection{background:#ffd0df;color:#651e36}
+.speech-bubble p:focus-visible{outline:2px solid #ae1646;outline-offset:4px;border-radius:4px}
+.speech-bubble svg{flex-shrink:0;color:#ae1646;margin-top:3px}
+@keyframes speech-appear{from{opacity:.8;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:759px){.speech-bubble{width:88%;padding:14px 18px}.speech-bubble p{font-size:16px;max-height:120px}}
+@media(prefers-reduced-motion:reduce){.speech-bubble{animation:none}}
