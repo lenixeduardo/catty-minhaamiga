@@ -1,0 +1,11 @@
+create table if not exists public.learning_sessions(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id) on delete cascade,level text not null check(level in('A1','A2','B1','B2','C1','C2')),started_at timestamptz not null default now(),ended_at timestamptz);
+create table if not exists public.learning_errors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id) on delete cascade,session_id uuid not null references public.learning_sessions(id) on delete cascade,original_text text not null,corrected_text text not null,explanation text,category text,created_at timestamptz not null default now());
+create index if not exists learning_sessions_user_idx on public.learning_sessions(user_id,started_at desc);
+create index if not exists learning_errors_user_idx on public.learning_errors(user_id,created_at desc);
+alter table public.learning_sessions enable row level security;
+alter table public.learning_errors enable row level security;
+create policy "sessions owned select" on public.learning_sessions for select to authenticated using ((select auth.uid())=user_id);
+create policy "sessions owned insert" on public.learning_sessions for insert to authenticated with check ((select auth.uid())=user_id);
+create policy "sessions owned update" on public.learning_sessions for update to authenticated using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
+create policy "errors owned select" on public.learning_errors for select to authenticated using ((select auth.uid())=user_id);
+create policy "errors owned insert" on public.learning_errors for insert to authenticated with check ((select auth.uid())=user_id and exists(select 1 from public.learning_sessions s where s.id=session_id and s.user_id=(select auth.uid())));

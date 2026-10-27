@@ -1,0 +1,41 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> catty-minhaamiga-mvp@0.1.0 test
+> node --import tsx --test tests/*.test.mjs
+
+✔ PCM encodes clipped signed 16-bit little endian samples (4.870263ms)
+✔ voice tickets can only be consumed once and preserve level (0.678645ms)
+✔ expired tickets cannot start a voice session (0.700137ms)
+✔ quota and key errors are actionable and do not echo provider secrets (0.933279ms)
+✔ WebSocket relay refuses cross-origin or unauthenticated connections without calling Google (25.639782ms)
+✔ local guest can start voice without Supabase and retains rate limiting (473.356856ms)
+✔ guest access is refused for a nonlocal Host or Origin (502.857996ms)
+✔ login remains required with {"NODE_ENV":"production","DEV_GUEST_MODE":"true"} (439.980608ms)
+✔ login remains required with {"DEV_GUEST_MODE":"false"} (389.672227ms)
+✔ Gemini is required even when a legacy OpenAI key exists (380.64568ms)
+✔ configured Gemini issues a local ticket without exposing the provider key (371.962701ms)
+✔ token exige JWT validado pelo Supabase (1.022253ms)
+✔ token possui limite de emissão por usuário (0.226121ms)
+✔ sessão é criada com usuário autenticado (0.18516ms)
+✔ sessão é encerrada com data de término (0.144308ms)
+✔ chave permanente nunca vai para frontend (0.596551ms)
+✔ Supabase URL is exclusive to Catty (1.439674ms)
+✔ Frontend uses publishable key, never service role (0.543391ms)
+✔ Backend and frontend use same Supabase project (0.106431ms)
+﹣ Live auth health endpoint (opt-in) (0.111538ms) # Set RUN_LIVE_SUPABASE=1 in networked environment
+﹣ Live REST denies anonymous profile reads (opt-in) (0.090557ms) # Set RUN_LIVE_SUPABASE=1 in networked environment
+✔ identidade Catty na interface e no prompt (7.089174ms)
+✔ token não é emitido sem chave ou login (0.21171ms)
+✔ nível inicial A1 e níveis permitidos (0.228805ms)
+✔ prompt instrui correção pontual, repetição e português (0.354045ms)
+✔ interface recebe transcrições dos dois participantes (2.912257ms)
+✔ tabelas possuem RLS e políticas de propriedade (0.369498ms)
+✔ cliente não contém chave permanente da OpenAI (0.242226ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 2715.043737
