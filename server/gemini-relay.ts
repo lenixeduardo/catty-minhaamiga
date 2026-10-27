@@ -12,9 +12,11 @@ export function voiceError(error: unknown): string {
 }
 export function createTickets() {
  const entries=new Map<string,{level:string,expires:number}>();
+ const cleanup=()=>{const now=Date.now();for(const [key,item] of entries)if(item.expires<now)entries.delete(key);};
+ setInterval(cleanup,30000).unref?.();
  return {
-  issue(level:string){for(const [key,item] of entries)if(item.expires<Date.now())entries.delete(key);if(entries.size>=1000)throw Error('Muitas conexões pendentes');const value=randomBytes(32).toString('hex');entries.set(value,{level,expires:Date.now()+60000});return value},
-  consume(value:string){const entry=entries.get(value);entries.delete(value);return entry&&entry.expires>Date.now()?entry:null},
+  issue(level:string){cleanup();if(entries.size>=1000)throw Error('Muitas conexões pendentes');const value=randomBytes(32).toString('hex');entries.set(value,{level,expires:Date.now()+60000});return value},
+  consume(value:string){cleanup();const entry=entries.get(value);entries.delete(value);return entry&&entry.expires>Date.now()?entry:null},
  };
 }
 export function attachGeminiRelay(server:Server,tickets:ReturnType<typeof createTickets>,instruction:string){
@@ -22,9 +24,23 @@ export function attachGeminiRelay(server:Server,tickets:ReturnType<typeof create
  server.on('upgrade',(req,socket,head)=>{
   const url=new URL(req.url||'/', 'http://localhost');
   if(url.pathname!=='/api/live'){socket.destroy();return;}
-  let sameOrigin=false;
-  try{sameOrigin=!!req.headers.origin&&new URL(req.headers.origin).host===req.headers.host}catch{}
-  if(!sameOrigin){socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');return;}
+  let allowed=false;
+  try{
+    const origin=req.headers.origin;
+    if(!origin){socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');return;}
+    const originHost=new URL(origin).host;
+    const reqHost=req.headers.host||'';
+    const allowedOrigins=(process.env.ALLOWED_ORIGINS||process.env.VITE_ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
+    if(allowedOrigins.length>0){
+      allowed=allowedOrigins.includes(originHost)||allowedOrigins.includes(origin);
+    }else if(process.env.NODE_ENV==='production'){
+      allowed=false;
+    }else{
+      const localHosts=['localhost:5173','127.0.0.1:5173','[::1]:5173','localhost:3000','127.0.0.1:3000',reqHost].filter(Boolean);
+      allowed=localHosts.includes(originHost);
+    }
+  }catch{allowed=false;}
+  if(!allowed){socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');return;}
   const ticket=tickets.consume(url.searchParams.get('ticket')||'');
   if(!ticket){socket.end('HTTP/1.1 401 Unauthorized\r\n\r\n');return;}
   wss.handleUpgrade(req,socket,head,peer=>{

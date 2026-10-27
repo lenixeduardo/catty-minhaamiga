@@ -9,14 +9,61 @@ export const instruction=`Você é Catty, uma gatinha virtual adulta e mentora d
 const supabaseUrl=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL;
 const supabaseKey=process.env.SUPABASE_PUBLISHABLE_KEY||process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const authClient=supabaseUrl&&supabaseKey?createClient(supabaseUrl,supabaseKey,{auth:{persistSession:false,autoRefreshToken:false}}):null;
+
+function getClientIp(req: express.Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    const ip = forwarded.split(',')[0].trim();
+    if (ip) return ip.replace(/^::ffff:/, '');
+  }
+  const realIp = req.headers['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.trim()) {
+    return realIp.trim().replace(/^::ffff:/, '');
+  }
+  const remote = req.socket.remoteAddress || '';
+  return remote.replace(/^::ffff:/, '');
+}
+
+function isTrustedProxy(req: express.Request): boolean {
+  const trusted = (process.env.TRUSTED_PROXIES || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (trusted.length === 0) return false;
+  const ip = req.socket.remoteAddress?.replace(/^::ffff:/, '') || '';
+  return trusted.includes(ip);
+}
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.VITE_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+function isAllowedOrigin(origin?: string): boolean {
+  if (!origin) return false;
+  try {
+    const url = new URL(origin);
+    const host = url.host;
+    if (allowedOrigins.length > 0) {
+      return allowedOrigins.includes(host) || allowedOrigins.includes(origin);
+    }
+    if (process.env.NODE_ENV === 'production') return false;
+    const localHosts = ['localhost:5173', '127.0.0.1:5173', '[::1]:5173', 'localhost:3000', '127.0.0.1:3000'];
+    return localHosts.includes(host);
+  } catch {
+    return false;
+  }
+}
+
 // Temporary guest access is restricted to local development, including requests through Vite.
 function isLocalGuest(req: express.Request): boolean {
   if(process.env.NODE_ENV==='production'||process.env.DEV_GUEST_MODE==='false')return false;
-  if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||''))return false;
+  const ip = getClientIp(req);
+  if(!['127.0.0.1','::1'].includes(ip)) {
+    if (!isTrustedProxy(req)) return false;
+  }
   const localNames=['localhost','127.0.0.1','[::1]'];
   try {
-    if(!localNames.includes(new URL('http://'+req.headers.host).hostname))return false;
-    if(req.headers.origin&&!localNames.includes(new URL(req.headers.origin).hostname))return false;
+    const host = req.headers.host ? new URL('http://'+req.headers.host).hostname : '';
+    if(!localNames.includes(host))return false;
+    if(req.headers.origin && !isAllowedOrigin(req.headers.origin))return false;
     return true;
   } catch { return false; }
 }
