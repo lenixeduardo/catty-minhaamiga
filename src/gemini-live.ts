@@ -12,23 +12,38 @@ export class GeminiVoice {
  private source:MediaStreamAudioSourceNode|null=null;
  private players=new Set<AudioBufferSourceNode>();
  private cursor=0;private disposed=false;private ready=false;private muted=false;
+ private captureReady=false;private serverReady=false;
  private timeout:ReturnType<typeof setTimeout>|undefined;
  constructor(private handlers:Handlers){void this.context.resume().catch(()=>{})}
- async start(ticket:string){
-  const media=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true}});
-  if(this.disposed){media.getTracks().forEach(track=>track.stop());return}
-  this.media=media;
-  await this.context.audioWorklet.addModule('/pcm-capture.js');
+ private activate(){
+  if(this.disposed||this.ready||!this.captureReady||!this.serverReady)return;
+  clearTimeout(this.timeout);this.ready=true;this.handlers.ready();
+ }
+ private async prepareCapture(){
+  const mediaTask=navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true}}).then(media=>{
+   if(this.disposed){media.getTracks().forEach(track=>track.stop());return}
+   this.media=media;
+  });
+  await Promise.all([mediaTask,this.context.audioWorklet.addModule('/pcm-capture.js'),this.context.resume()]);
   if(this.disposed)return;
   if(this.context.sampleRate!==16000)throw Error('Este navegador não suporta a captura de áudio em 16 kHz. Tente uma versão atual do Chrome ou Edge.');
-  this.source=this.context.createMediaStreamSource(media);
+  this.source=this.context.createMediaStreamSource(this.media!);
   this.capture=new AudioWorkletNode(this.context,'pcm-capture');
   this.source.connect(this.capture);this.capture.connect(this.context.destination);
   this.capture.port.onmessage=event=>{if(this.ready&&!this.muted&&this.socket?.readyState===WebSocket.OPEN&&this.socket.bufferedAmount<65536)this.socket.send(JSON.stringify({type:'audio',data:encodePcm(event.data)}))};
+  this.captureReady=true;this.activate();
+ }
+ async start(ticket:string|Promise<string>){
+  if(this.disposed)return;
+  try{
+   await Promise.all([this.prepareCapture(),Promise.resolve(ticket).then(value=>{if(!this.disposed)this.connect(value)})]);
+  }catch(error){this.close();throw error}
+ }
+ private connect(ticket:string){
   this.socket=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}/api/live?ticket=${encodeURIComponent(ticket)}`);
   this.timeout=setTimeout(()=>this.handlers.error('Tempo de conexão excedido. Verifique a rede e a chave Gemini.'),25000);
   this.socket.onmessage=event=>{if(this.disposed)return;try{const data=JSON.parse(event.data);
-   if(data.type==='ready'){clearTimeout(this.timeout);this.ready=true;this.handlers.ready()}
+   if(data.type==='ready'){clearTimeout(this.timeout);this.serverReady=true;this.activate()}
    if(data.type==='transcript')this.handlers.transcript(data.who,data.text);
    if(data.type==='audio')this.play(data.data,data.sampleRate);
    if(data.type==='interrupted')this.clearAudio();
