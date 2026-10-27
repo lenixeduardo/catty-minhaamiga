@@ -27,11 +27,12 @@ const stop=()=>{starting.current=false;setConnecting(false);if(supabase&&session
 const start=async()=>{if(starting.current||voice.current)return;starting.current=true;setConnecting(true);setError('');setStatus('Conectando ao Gemini…');let current:GeminiVoice|null=null;try{
  if(!navigator.mediaDevices?.getUserMedia)throw Error('Microfone indisponível: use HTTPS ou localhost.');
  current=new GeminiVoice({ready:()=>{if(voice.current!==current)return;starting.current=false;setConnecting(false);setActive(true);setStatus('Catty está ouvindo')},transcript:(who,text)=>setLines(v=>{const last=v.at(-1);return last?.who===who?[...v.slice(0,-1),{who,text:last.text+text}]:[...v,{who,text}]}),talking:setTalking,closed:stop,error:message=>{stop();setError(message);setStatus('Não conectada')}});voice.current=current;
- let auth:{session:{access_token:string,user:{id:string}}|null}={session:null};if(!guestMode){if(!supabase)throw Error('Configure o Supabase para iniciar.');const result=await supabase.auth.getSession();auth=result.data;if(!auth.session?.access_token)throw Error('Faça login antes de conversar.');}
+ let auth:{session:{access_token:string,user:{id:string}}|null}={session:null};const ticket=(async()=>{if(!guestMode){if(!supabase)throw Error('Configure o Supabase para iniciar.');const result=await supabase.auth.getSession();auth=result.data;if(!auth.session?.access_token)throw Error('Faça login antes de conversar.');}
  const response=await fetch('/api/realtime-token',{method:'POST',headers:{'Content-Type':'application/json',...(!guestMode?{Authorization:`Bearer ${auth.session!.access_token}`}:{})},body:JSON.stringify({level})});const payload=await response.json();if(!response.ok||!payload.value)throw Error(payload.error||'Não foi possível conectar ao Gemini.');
+ return payload.value as string;})();
+ await current.start(ticket);
  if(voice.current!==current)return;
  if(!guestMode&&supabase&&auth.session){const {data:saved,error:saveError}=await supabase.from('practice_sessions').insert({user_id:auth.session!.user.id}).select('id').single();if(saveError)throw Error('Não foi possível salvar a sessão: '+saveError.message);if(voice.current!==current){void supabase.from('practice_sessions').update({ended_at:new Date().toISOString()}).eq('id',saved.id);return}sessionId.current=saved.id;}
- await current.start(payload.value);
  }catch(e){if(voice.current===current){stop();setError(e instanceof Error?e.message:'Erro ao conectar');setStatus('Não conectada')}}};
 const toggleMute=()=>{const next=!muted;voice.current?.setMuted(next);setMuted(next)};
 const signIn=async()=>{if(!supabase){setError('Configure as variáveis VITE_SUPABASE_* para ativar o login.');return}const email=window.prompt('Email para link de acesso:');if(!email)return;const{error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});setError(error?.message||'Verifique seu email para acessar.')};
