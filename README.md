@@ -1,50 +1,124 @@
-# Catty minhaAmiga — Gemini Live
+# Catty minhaAmiga
 
-Mentora de inglês por voz com interface branca e rosa, gatinha em imagem, conversa e transcrição em tempo real. React/TypeScript/Vite e Express com Gemini Live via WebSocket. Supabase preservado para contas e sessões autenticadas.
+Uma mentora de inglês por voz com personalidade única. Converse com a Catty, uma gatinha sarcástica e divertida que te ensina inglês do zero ao avançado através de diálogos naturais, correções pontuais e explicações didáticas quando você precisar.
 
-## Atualizar no Windows
+![Catty minhaAmiga - Capa do Projeto](./docs/catty-cover.png)
 
-1. Encerre os terminais antigos do Catty com Ctrl+C.
-2. Extraia o ZIP sobre a pasta do projeto, substituindo os arquivos. Preserve seu `.env` (não está incluído no ZIP).
-3. Execute `npm install` para instalar `@google/genai`, `ws` e as demais dependências.
-4. Edite `.env` na raiz e configure:
+## ✨ Principais Funcionalidades
 
-```dotenv
-GEMINI_API_KEY=SUA_CHAVE_DO_GOOGLE_AI_STUDIO
-GEMINI_LIVE_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
-DEV_GUEST_MODE=true
-PORT=3001
+- **Conversa por voz em tempo real** - Fale naturalmente com a Catty usando Gemini Live API
+- **Bilíngue e flexível** - Aceita mistura entre português e inglês livremente, sem pressão para falar 100% em inglês
+- **Correção inteligente** - Ao praticar, corrige apenas a palavra/expressão errada e pede para tentar de novo
+- **Ensino didático** - Perguntou sobre gramática? Ela explica em português com exemplos e já te puxa pra praticar
+- **Transcrição ao vivo** - Veja tudo que foi dito, tanto seu quanto da Catty
+- **Chat por texto** - Também pode enviar mensagens por escrito na mesma conversa
+- **Sistema de tickets** - Conexão segura com tokens únicos e temporários
+- **Modo visitante** - Teste rápido sem login (apenas em localhost)
+- **Animações e estados visuais** - Gatinha reage com animações conforme fala, escuta ou pensa
+
+## 🛠️ Tecnologias
+
+| Camada | Tecnologias |
+| --- | --- |
+| **Frontend** | React 19, TypeScript, Vite, Lucide React |
+| **Backend** | Node.js, Express, WebSocket (ws) |
+| **IA/Voz** | Google Gemini Live API (`@google/genai`) |
+| **Autenticação** | Supabase Auth |
+| **Áudio** | Web Audio API, AudioWorklet (PCM16 16kHz) |
+
+## 🚀 Como Rodar
+
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) 18+ 
+- Chave da [Google AI Studio](https://aistudio.google.com/apikey) com acesso ao Gemini Live
+- (Opcional) [Supabase](https://supabase.com/) para autenticação
+
+### Instalação
+
+1. **Clone o repositório**
+```bash
+git clone https://github.com/lenixeduardo/catty-minhaamiga.git
+cd catty-minhaamiga
 ```
 
-Preserve as variáveis existentes do Supabase. A chave permanente Gemini fica apenas no servidor; não use prefixo VITE_. As variáveis antigas OPENAI_API_KEY e OPENAI_REALTIME_MODEL podem ser removidas: não são lidas pela aplicação atual.
+2. **Instale as dependências**
+```bash
+npm install
+```
 
-5. Execute somente `npm run dev`, que inicia interface e API juntas. Não execute `npm run server` em paralelo. As portas padrão são 5173 e 3001; encerre instâncias antigas se estiverem ocupadas. Se um serviço falhar, o comando encerra o outro. Após alterar o backend ou .env, reinicie npm run dev.
-6. Abra o endereço local do Vite, autorize o microfone e toque em Começar conversa.
+3. **Configure as variáveis de ambiente**
+Crie um arquivo `.env` na raiz com base no `.env.example`:
 
-## Como funciona
+```env
+# Obrigatório
+GEMINI_API_KEY=SUA_CHAVE_DO_GOOGLE_AI_STUDIO
+GEMINI_LIVE_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
 
-O navegador obtém um ticket aleatório de uso único, válido por 60 segundos, no backend. Esse ticket autoriza a conexão WebSocket da própria aplicação. O servidor conecta ao Google usando a chave permanente e limita o modelo e as instruções. A chave não vai ao navegador.
+# Servidor
+PORT=3001
 
-O microfone é capturado por AudioWorklet, em mono PCM16 a 16 kHz. O áudio de resposta é reproduzido em fila conforme a taxa informada pelo Gemini. Interrupções limpam a fila, Silenciar interrompe o envio e Encerrar libera microfone, WebSocket e contexto de áudio. Transcrições de entrada e saída são habilitadas. O campo de texto envia mensagens na mesma sessão ativa.
+# Modo visitante (apenas localhost)
+DEV_GUEST_MODE=true
 
-O modo visitante permanece disponível apenas em localhost e fora de produção. Para exigir login local, use DEV_GUEST_MODE=false. Sessões de visitante não são salvas no banco. Sessões autenticadas mantêm criação e encerramento no Supabase.
+# Segurança
+ALLOWED_ORIGINS=localhost:5173,127.0.0.1:5173
+TRUSTED_PROXIES=127.0.0.1
 
-## Uso gratuito e cotas
+# Opcional - Supabase
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+```
 
-O modelo padrão foi escolhido com base no free tier publicado pelo Google. Use uma chave de projeto no plano gratuito para manter custo de API zero. O código não altera faturamento, não compra créditos e não muda de provedor ao atingir uma cota. Uma chave de projeto com faturamento ativado segue as regras de cobrança desse projeto: o código não consegue impor o free tier do Google.
+4. **Inicie a aplicação**
+```bash
+npm run dev
+```
 
-Há limite local de 3 inícios por minuto e cada conexão dura no máximo 10 minutos. Erros de cota encerram a conexão com aviso; não há retentativa automática nem fallback para OpenAI. No free tier, o Google pode usar o conteúdo para melhorar produtos, conforme seus termos.
+5. **Acesse no navegador**
+Abra [http://localhost:5173](http://localhost:5173), autorize o microfone e comece a conversar!
 
-## Validação e limitações
+## 🎮 Como Usar
 
-- `npm test`: testes locais de PCM16, tickets únicos/expiração, rejeição de WebSocket sem autorização ou com origem externa, mensagens de cota, modo visitante, JWT e contratos existentes.
-- `npm run build`: valida TypeScript e gera a interface.
-- A conversa real não foi homologada neste ambiente porque GEMINI_API_KEY não está disponível. Verifique o acesso ao modelo, a cota do projeto, microfone, áudio e transcrição na sua máquina.
-- O navegador precisa suportar AudioWorklet e AudioContext a 16 kHz; HTTPS ou localhost são necessários para microfone.
-- A gatinha é uma imagem de aparência 3D, ainda sem boca animada.
+1. **Começar conversa** - Clique no botão do microfone
+2. **Falar naturalmente** - Pode falar em português, inglês ou misturar os dois
+3. **Tirar dúvidas** - Pergunte sobre gramática que ela explica e volta pro diálogo
+4. **Corrigir** - Quando errar, ela aponta só o erro e pede pra tentar de novo
+5. **Enviar texto** - Também dá pra digitar no campo de chat
+6. **Silenciar/Encerrar** - Use os botões para controlar a conversa
 
-## Referências
+## 🧪 Scripts Disponíveis
 
-- https://ai.google.dev/gemini-api/docs/live-api/get-started-sdk
-- https://ai.google.dev/gemini-api/docs/pricing
-- https://ai.google.dev/gemini-api/docs/rate-limits
+```bash
+npm run dev      # Inicia frontend + backend em modo desenvolvimento
+npm run build    # Build para produção
+npm run server   # Inicia apenas o servidor
+npm run test     # Roda os testes
+```
+
+## 🔒 Segurança
+
+- **Chave no servidor** - A `GEMINI_API_KEY` nunca vai para o navegador
+- **Tickets temporários** - Autorização one-time use válida por 60 segundos
+- **Verificação de origem** - Proteção contra CSWSH com allowlist configurável
+- **Rate limiting** - Limite de 3 sessões por minuto por usuário/IP
+- **Modo visitante restrito** - Apenas em localhost ou via proxy confiável
+- **Sessões com timeout** - Máximo 10 minutos por conversa
+
+## 📝 Notas
+
+- Requer navegador com suporte a AudioWorklet e getUserMedia (Chrome, Edge, Firefox modernos)
+- Funciona melhor em HTTPS ou localhost
+- No free tier do Google, o conteúdo pode ser usado para melhoria de produtos conforme os termos do Google
+- A gatinha tem personalidade própria - se quiser menos palavrões, basta pedir
+
+## 📄 Licença
+
+Este projeto é privado.
+
+## 🔗 Links Úteis
+
+- [Google Gemini Live API](https://ai.google.dev/gemini-api/docs/live-api)
+- [Documentação do Google AI Studio](https://aistudio.google.com/)
