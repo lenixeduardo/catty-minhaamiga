@@ -7,13 +7,15 @@ import {GeminiVoice} from '../src/gemini-live.ts';
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return {promise,resolve,reject}};
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function environment(t){
- const microphone=deferred(),module=deferred(),sockets=[],captures=[],calls=[],tracks=[{enabled:true,stop(){calls.push('stop')}}];
+ const microphone=deferred(),module=deferred(),sockets=[],captures=[],players=[],calls=[],tracks=[{enabled:true,stop(){calls.push('stop')}}];
  class Context {
   sampleRate=16000;currentTime=0;destination={};
   audioWorklet={addModule:()=>{calls.push('module');return module.promise}};
   resume(){return Promise.resolve()}
   close(){calls.push('close-context');return Promise.resolve()}
   createMediaStreamSource(){return {connect(){},disconnect(){calls.push('disconnect-source')}}}
+  createBuffer(_channels,length,rate){return {duration:length/rate,getChannelData:()=>new Float32Array(length)}}
+  createBufferSource(){const player={connect(){},disconnect(){},start(){},stop(){},onended:null};players.push(player);return player}
  }
  class Socket {
   static OPEN=1;readyState=1;bufferedAmount=0;sent=[];
@@ -28,10 +30,10 @@ function environment(t){
   Object.defineProperty(globalThis,key,{configurable:true,value});
   t.after(()=>previous?Object.defineProperty(globalThis,key,previous):delete globalThis[key]);
  }
- let ready=0;const errors=[];
- const voice=new GeminiVoice({ready:()=>ready++,transcript(){},talking(){},closed(){},error:message=>errors.push(message)});
+ let ready=0;const errors=[],turns=[],speechTexts=[];
+ const voice=new GeminiVoice({ready:()=>ready++,transcript(){},talking(){},speech:text=>speechTexts.push(text),turnEnded:interrupted=>turns.push(interrupted),closed(){},error:message=>errors.push(message)});
  t.after(()=>voice.close());
- return {voice,microphone,module,sockets,captures,calls,tracks,errors,ready:()=>ready,media:{getTracks:()=>tracks,getAudioTracks:()=>tracks}};
+ return {voice,microphone,module,sockets,captures,players,calls,tracks,errors,turns,speechTexts,ready:()=>ready,media:{getTracks:()=>tracks,getAudioTracks:()=>tracks}};
 }
 test('microphone and worklet prepare while authorization is still pending',async t=>{
  const env=environment(t),ticket=deferred(),starting=env.voice.start(ticket.promise);
@@ -82,6 +84,25 @@ test('a pending microphone permission does not time out an already ready Gemini 
  assert.deepEqual(env.errors,[]);assert.equal(env.ready(),0);
  env.microphone.resolve(env.media);env.module.resolve();await starting;
  assert.equal(env.ready(),1);
+});
+test('voice reports reply boundaries and interruptions to the speech bubble',async t=>{
+ const env=environment(t),starting=env.voice.start('ticket');
+ env.microphone.resolve(env.media);env.module.resolve();await starting;
+ env.sockets[0].message({type:'turnComplete'});
+ env.sockets[0].message({type:'interrupted'});
+ assert.deepEqual(env.turns,[false,true]);
+});
+test('voice changes bubble text at playback boundaries rather than generation boundaries',async t=>{
+ const env=environment(t),starting=env.voice.start('ticket');
+ env.microphone.resolve(env.media);env.module.resolve();await starting;
+ const socket=env.sockets[0],audio={type:'audio',sampleRate:24000,data:Buffer.alloc(8).toString('base64')};
+ socket.message({type:'transcript',who:'Catty',text:'First reply'});socket.message(audio);
+ socket.message({type:'turnComplete'});
+ socket.message({type:'transcript',who:'Catty',text:'Second reply'});socket.message(audio);
+ assert.equal(env.speechTexts.at(-1),'First reply');
+ env.players[0].onended();assert.equal(env.speechTexts.at(-1),'Second reply');
+ socket.message({type:'interrupted'});assert.equal(env.speechTexts.at(-1),'');
+ assert.deepEqual(env.errors,[]);
 });
 test('capture emits the first PCM packet within 32ms and preserves sample order',()=>{
  let Processor;const packets=[];
