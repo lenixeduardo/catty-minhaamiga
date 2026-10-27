@@ -1,10 +1,12 @@
+import {CattySpeechQueue} from './catty-speech';
 export function encodePcm(samples:Float32Array):string {
  const bytes=new Uint8Array(samples.length*2),view=new DataView(bytes.buffer);
  for(let i=0;i<samples.length;i++){const x=Math.max(-1,Math.min(1,samples[i]));view.setInt16(i*2,Math.round(x<0?x*32768:x*32767),true)}
  let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);return btoa(binary);
 }
-type Handlers={ready:()=>void;transcript:(who:'Catty'|'Você',text:string)=>void;talking:(value:boolean)=>void;closed:()=>void;error:(message:string)=>void};
+type Handlers={speech?:(text:string)=>void;ready:()=>void;transcript:(who:'Catty'|'Você',text:string)=>void;talking:(value:boolean)=>void;turnEnded?:(interrupted:boolean)=>void;closed:()=>void;error:(message:string)=>void};
 export class GeminiVoice {
+ private speech=new CattySpeechQueue();
  private context=new AudioContext({sampleRate:16000});
  private socket:WebSocket|null=null;
  private media:MediaStream|null=null;
@@ -44,9 +46,10 @@ export class GeminiVoice {
   this.timeout=setTimeout(()=>this.handlers.error('Tempo de conexão excedido. Verifique a rede e a chave Gemini.'),25000);
   this.socket.onmessage=event=>{if(this.disposed)return;try{const data=JSON.parse(event.data);
    if(data.type==='ready'){clearTimeout(this.timeout);this.serverReady=true;this.activate()}
-   if(data.type==='transcript')this.handlers.transcript(data.who,data.text);
+   if(data.type==='transcript'){if(data.who==='Catty'){this.speech.transcript(data.text);this.handlers.speech?.(this.speech.text)}this.handlers.transcript(data.who,data.text)}
    if(data.type==='audio')this.play(data.data,data.sampleRate);
-   if(data.type==='interrupted')this.clearAudio();
+   if(data.type==='interrupted'){this.clearAudio();this.handlers.turnEnded?.(true)}
+   if(data.type==='turnComplete'){this.speech.endTurn();this.handlers.turnEnded?.(false)}
    if(data.type==='error')this.handlers.error(data.message);
   }catch{this.handlers.error('Resposta de áudio inválida do servidor.') }};
   this.socket.onerror=()=>{if(!this.disposed)this.handlers.error('Falha na conexão de voz. Verifique se a API do Catty está rodando e se a chave permite Gemini Live.')};
@@ -58,11 +61,12 @@ export class GeminiVoice {
   const buffer=this.context.createBuffer(1,raw.length/2,rate),samples=buffer.getChannelData(0);
   for(let i=0;i<samples.length;i++)samples[i]=view.getInt16(i*2,true)/32768;
   const player=this.context.createBufferSource();player.buffer=buffer;player.connect(this.context.destination);
-  this.players.add(player);this.handlers.talking(true);
-  player.onended=()=>{this.players.delete(player);if(!this.players.size)this.handlers.talking(false)};
+  const speechId=this.speech.enqueue();
+  this.players.add(player);this.handlers.speech?.(this.speech.text);this.handlers.talking(true);
+  player.onended=()=>{this.players.delete(player);this.speech.finish(speechId);this.handlers.speech?.(this.speech.text);if(!this.players.size)this.handlers.talking(false)};
   const at=Math.max(this.cursor,this.context.currentTime);player.start(at);this.cursor=at+buffer.duration;
  }
- private clearAudio(){for(const player of this.players){player.onended=null;try{player.stop()}catch{}player.disconnect()}this.players.clear();this.cursor=0;this.handlers.talking(false)}
+ private clearAudio(){for(const player of this.players){player.onended=null;try{player.stop()}catch{}player.disconnect()}this.players.clear();this.speech.reset();this.handlers.speech?.('');this.cursor=0;this.handlers.talking(false)}
  sendText(text:string){if(this.ready&&this.socket?.readyState===WebSocket.OPEN)this.socket.send(JSON.stringify({type:'text',text:text.slice(0,2000)}))}
  setMuted(value:boolean){this.muted=value;this.media?.getAudioTracks().forEach(track=>track.enabled=!value);if(value&&this.socket?.readyState===WebSocket.OPEN)this.socket.send(JSON.stringify({type:'audioEnd'}))}
  close(){if(this.disposed)return;this.disposed=true;this.ready=false;clearTimeout(this.timeout);this.capture?.disconnect();this.source?.disconnect();this.media?.getTracks().forEach(track=>track.stop());this.socket?.close();this.clearAudio();void this.context.close().catch(()=>{})}
