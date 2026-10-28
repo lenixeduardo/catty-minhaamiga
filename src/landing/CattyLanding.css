@@ -213,3 +213,47 @@ main.catty-site{height:auto!important;min-height:100vh!important;max-height:none
  .cm-plan-art-alt img{transform:translateY(14px) rotate(-9deg) scale(1.05)}
  .cm-last>img{mix-blend-mode:screen;filter:contrast(1.15) saturate(1.2) drop-shadow(0 0 14px #ffb4aa)}
 }
+
+
+/* V6 — mobile-only geometry and illumination. All original image files remain untouched. */
+@media (max-width:780px) {
+  /* 01: Preserve the full dark demo section and its existing phone/chat. */
+  .cm-why {display:block!important;position:relative;isolation:isolate;background:linear-gradient(180deg,#09060b 0%,#1b0b18 57%,#fff 82%);overflow:hidden}
+  .cm-demo {height:345px;overflow:hidden;margin-top:18px}
+  .cm-demo .cm-mini-phone {top:9px;z-index:2}
+  .cm-feature-row {align-items:stretch;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:0}
+  .cm-feature-row article {min-height:256px;height:100%;padding:15px 11px 18px}
+  .cm-feature-row p {font-size:clamp(11px,2.9vw,13px);line-height:1.48;color:#514a51}
+  /* 02: Reveal more of each existing character without editing or recoloring its asset. */
+  .cm-plan-art {height:152px;min-height:152px;overflow:hidden;position:relative}
+  .cm-plan-art img,.cm-plan-art-alt img {
+    display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;
+    transform:none;mix-blend-mode:normal;filter:none
+  }
+  /* 03: Maintain cinematic halo but keep the headline free of distracting light. */
+  .cm-hero {isolation:isolate}
+  .cm-hero-glow {background:radial-gradient(ellipse at 53% 17%,#ffcaaccc 0%,#ff7a9c73 34%,transparent 62%),radial-gradient(ellipse at 72% 82%,#ff5c9c66,transparent 52%);filter:blur(25px)}
+  .cm-hero::after {background:linear-gradient(180deg,transparent 0%,#31091a24 24%,#270819e8 42%,#370c248a 67%,transparent 100%)}
+  .cm-light-ring {box-shadow:0 0 25px #ffb5b0,0 0 60px #f72986;opacity:.82}
+  .cm-hero-cat {mix-blend-mode:normal;filter:drop-shadow(0 0 20px #ffc0b0);opacity:1}
+  .cm-hero-content h1 {position:relative;z-index:4;text-shadow:0 2px 15px #1d0418bb}
+  /* 04: Cards share identical image slots, content tracks, and bottom-aligned buttons. */
+  .cm-plan-cards {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
+  .cm-plan-cards article {display:grid;grid-template-rows:152px minmax(42px,auto) 1fr 44px;align-items:start;gap:9px;min-height:345px;padding:10px;border-radius:18px}
+  .cm-plan-cards h3 {margin:0;font-size:clamp(14px,3.75vw,17px);line-height:1.2;min-height:42px}
+  .cm-plan-cards p {margin:0;font-size:clamp(11px,3vw,13px);line-height:1.46;color:#504b52}
+  .cm-plan-cards .cm-button {min-height:44px;align-self:end;font-size:11px}
+  /* 05: Increase mobile secondary copy legibility without rewriting it. */
+  .cm-hero-content>p {font-size:clamp(14px,3.85vw,16px);line-height:1.53}
+  .cm-why-lead,.cm-plans-lead {font-size:clamp(13px,3.55vw,15px);line-height:1.5}
+  .cm-faq-item button {font-size:clamp(12px,3.3vw,14px);line-height:1.4;min-height:46px}
+  .cm-faq-item>p {font-size:13px;line-height:1.55}
+  .cm-last p {font-size:clamp(11px,3vw,13px);line-height:1.42}
+}
+@media (max-width:360px) {
+  .cm-plan-cards {gap:7px}
+  .cm-plan-cards article {padding:8px;grid-template-rows:135px minmax(45px,auto) 1fr 44px}
+  .cm-plan-art {height:135px;min-height:135px}
+  .cm-plan-cards h3 {font-size:13px}
+  .cm-plan-cards p {font-size:11px}
+}
