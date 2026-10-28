@@ -70,3 +70,15 @@ main.catty-site{height:auto!important;min-height:100vh!important;max-height:none
   .catty-site .catty-mobile-feature-phone{height:350px}
 }
 @media(prefers-reduced-motion:reduce){.catty-site .catty-phone{transform:none!important}}
+
+/* V2.1: remove the full-page screenshot void while retaining a sticky phone during scroll. */
+@media(min-width:901px){
+  .catty-site .catty-showcase{height:auto!important;min-height:0!important;padding:100px 0 130px}
+  .catty-site .catty-showcase-sticky{position:relative!important;top:auto!important;height:auto!important;min-height:980px!important;align-items:start;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:50px 35px}
+  .catty-site .catty-showcase-copy{padding-top:20px}
+  .catty-site .catty-showcase-copy>h2{max-width:500px}
+  .catty-site .catty-feature-tabs{margin-top:65px;gap:22px}
+  .catty-site .catty-feature-tabs button{min-height:168px;display:flex;flex-direction:column;justify-content:center;padding:32px 34px;font-size:19px;line-height:1.4;transition:background .25s,border-color .25s}
+  .catty-site .catty-feature-tabs button span{font-size:12px;margin-bottom:10px}
+  .catty-site .catty-showcase-sticky>.catty-phone{position:sticky;top:calc(50vh - 310px);align-self:start;margin-top:25px}
+}
