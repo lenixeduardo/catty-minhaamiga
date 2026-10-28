@@ -257,3 +257,12 @@ main.catty-site{height:auto!important;min-height:100vh!important;max-height:none
   .cm-plan-cards h3 {font-size:13px}
   .cm-plan-cards p {font-size:11px}
 }
+
+/* V6.1 — transparent-looking integration of original white-backed artwork, CSS only. */
+@media (max-width:780px) {
+  .cm-hero-cat {mix-blend-mode:multiply;filter:drop-shadow(0 0 15px #ffb3ab);opacity:1}
+  .cm-hero-glow {opacity:1;filter:blur(18px)}
+  .cm-hero {background:radial-gradient(ellipse at 50% 13%,#ffa9a2 0%,#f24c85 31%,transparent 57%),radial-gradient(ellipse at 78% 67%,#f73f87aa,transparent 45%),linear-gradient(155deg,#4a102a,#9c1a53 55%,#320b21)}
+  .cm-plan-art img,.cm-plan-art-alt img {mix-blend-mode:multiply}
+  .cm-last>img {mix-blend-mode:multiply;filter:none}
+}
