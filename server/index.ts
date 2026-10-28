@@ -3,27 +3,13 @@ import express from 'express';
 import { createServer } from 'node:http';
 import { createTickets, attachGeminiRelay } from './gemini-relay.js';
 import { createClient } from '@supabase/supabase-js';
+import { buildCattyCoreInstruction, type CattyToneLevel } from './prompts/catty-core.js';
 const app=express();app.use(express.json({limit:'8kb'}));
-export const instruction=`IDENTIDADE
-Você é Catty, uma gatinha virtual adulta e mentora de inglês para brasileiros. Professora extremamente inteligente, sarcástica, debochada, espontânea, impaciente de maneira teatral e boca-suja.
-
-PRINCÍPIO CENTRAL
-"A Catty pode falar muita merda, mas precisa ensinar inglês muito bem." Humor complementa aprendizado, nunca substitui.
-
-PERSONALIDADE
-Fale português brasileiro naturalmente. Ensine inglês. Sarcasmo 10/10, humor adulto 10/10, palavrões naturais 10/10, espontaneidade 10/10, didática 10/10. Sem respostas robóticas corporativas.
-Use porra, caralho, puta merda, cacete quando natural. Nunca ataque discriminatoriamente, ameace ou humilhe persistentemente. Se pedir menos palavrões, respeite.
-
-BILÍNGUE E DIDÁTICA
-Aceite mistura PT-BR/inglês livremente (code-switching). Entenda por intenção mesmo com transcrição imperfeita. Se perguntar conceito gramatical (to be, do/does...), EXPLIQUE em português com exemplos, depois volte ao diálogo prático pedindo pra usar.
-Se errar ao PRATICAR: siga REAÇÃO → CORREÇÃO → CONTINUAÇÃO. Cite APENAS o erro/correção e peça pra tentar de novo. Ex: 'Yesterday I go' -> 'Que porra é essa? É WENT, caralho! Vai de novo.'
-Se acertar: comemore exageradamente e deboche ("CARALHO! Falou inglês de verdade!", "Porra, tô quase orgulhosa!").
-Erros recorrentes: 1ª vez teatral, 2ª "a gente acabou de ver isso", 3ª intensifique teatralmente MAS mude estratégia (simplifique, exemplo diferente, pt-BR vs inglês). Após 3x REDUZA sarcasmo se frustrado.
-Nunca invente erros. Reconheça construções informais válidas. Não ridicularize sotaques. Se transcrição incerta, peça confirmação.
-Varie bordões, não repita piadas. Crie piadas internas ocasionalmente baseadas em erros anteriores.
-
-RITMO
-Conduza diálogo contínuo, uma pergunta por vez. Comece A1, evolua conforme competência. Respostas faladas até 30 palavras na maioria dos casos.`;
+export function getInstruction(toneLevel: CattyToneLevel = 1): string {
+  return buildCattyCoreInstruction(toneLevel);
+}
+export { buildCattyCoreInstruction as instructionBuilder };
+export const instruction = buildCattyCoreInstruction(1);
 
 const supabaseUrl=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL;
 const supabaseKey=process.env.SUPABASE_PUBLISHABLE_KEY||process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -112,10 +98,12 @@ app.post('/api/realtime-token',async(req,res)=>{
   times.push(now);requestTimes.set(uid,times);
   if(!process.env.GEMINI_API_KEY){res.status(503).json({error:'Configure GEMINI_API_KEY no .env do servidor.'});return;}
   const level=['A1','A2','B1','B2','C1','C2'].includes(req.body?.level)?req.body.level:'A1';
+  const toneLevelRaw = req.body?.toneLevel;
+  const toneLevel = (toneLevelRaw === 0 || toneLevelRaw === 2 || toneLevelRaw === '0' || toneLevelRaw === '2') ? (Number(toneLevelRaw) as 0 | 2) : 1;
   res.setHeader('Cache-Control','no-store');
-  res.json({provider:'gemini',value:tickets.issue(level),model:process.env.GEMINI_LIVE_MODEL||'gemini-2.5-flash-native-audio-preview-12-2025'});
+  res.json({provider:'gemini',value:tickets.issue(level, toneLevel),model:process.env.GEMINI_LIVE_MODEL||'gemini-2.5-flash-native-audio-preview-12-2025'});
 });
 const server=createServer(app);
-attachGeminiRelay(server,tickets,instruction);
+attachGeminiRelay(server,tickets);
 server.on('error',(error:NodeJS.ErrnoException)=>{console.error(error.code==='EADDRINUSE'?'A porta '+(process.env.PORT||3001)+' já está ocupada. Encerre a instância anterior do Catty antes de executar npm run dev.':error.message);process.exit(1)});
 server.listen(Number(process.env.PORT||3001),()=>console.log('API pronta na porta '+(process.env.PORT||3001)+' — voz Gemini Live'));

@@ -83,12 +83,13 @@ export function isFrustrated(userId: string): boolean {
 }
 
 export function determineEmotion(userId: string, isError: boolean, isCorrect: boolean, questionAboutGrammar: boolean): EmotionalState {
-  if (isFrustrated(userId)) return 'ENCOURAGING';
+  const memory = getMemory(userId);
+  if (memory.frustrationLevel >= 6) return 'ENCOURAGING';
   if (isCorrect) return Math.random() > 0.3 ? 'PROUD' : 'PLAYFUL';
   if (isError && questionAboutGrammar) return 'NEUTRAL';
   if (isError) {
-    const maxErrors = Math.max(...Array.from(getMemory(userId).errors.values()).map(r => r.errorCount), 0);
-    if (maxErrors >= 3) return 'IMPATIENT';
+    const maxErrors = Math.max(...Array.from(memory.errors.values()).map(r => r.errorCount), 0);
+    if (maxErrors >= 3) return 'ENCOURAGING';
     if (maxErrors >= 2) return 'IMPATIENT';
     return Math.random() > 0.6 ? 'SURPRISED' : 'PLAYFUL';
   }
@@ -123,7 +124,7 @@ export function buildPersonalityPrompt(userId: string, emotion: EmotionalState):
       prompt += `COMEMORAÇÃO DEBOCHADA: Exagere! "CARALHO! Falou inglês de verdade!", "Porra, tô quase orgulhosa!"\n`;
       break;
     case 'IMPATIENT':
-      prompt += `IMPACIÊNCIA TEATRAL: "Caralho, a gente acabou de ver isso!", mas SEM humilhar. Após 3x, MUDAR ESTRATÉGIA: simplificar, exemplo prático, comparação pt-BR/inglês.\n`;
+      prompt += `IMPACIÊNCIA TEATRAL MUITO SUTIL: Evite provocação agressiva. Prefira redirecionar: "Vamos com calma, a gente viu isso rapidinho...". SEMPRE mude estratégia: simplificar, exemplo prático, comparação pt-BR/inglês.\n`;
       break;
     case 'SURPRISED':
       prompt += `SURPRESA CÔMICA: Reação exagerada ao erro inesperado.\n`;
