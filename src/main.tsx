@@ -3,6 +3,7 @@ import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import{Mic,MicOff,Square,Settings,Home,ChartNoAxesColumn,User,ArrowUp,Volume2,X,Heart,LogOut}from'lucide-react';
 import './style.css';
+import CattyLanding from './landing/CattyLanding';
 import {GeminiVoice} from './gemini-live';
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const supabase=url&&key?createClient(url,key):null;
@@ -45,4 +46,4 @@ return <main className={active||lines.length?'has-conversation':''}>
 {settingsOpen&&<div className="modal-backdrop" onClick={()=>setSettingsOpen(false)}><section className="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={e=>e.stopPropagation()}><div><h2 id="settings-title">Do seu jeito</h2><button autoFocus className="icon-button" aria-label="Fechar configurações" onClick={()=>setSettingsOpen(false)}><X/></button></div><label htmlFor="level">Nível de inglês</label><select id="level" value={level} disabled={active} onChange={e=>setLevel(e.target.value)}>{['A1','A2','B1','B2','C1','C2'].map(v=><option key={v}>{v}</option>)}</select>
 <label htmlFor="tone">Intensidade da Catty</label><select id="tone" value={toneLevel} disabled={active} onChange={e=>{const v=Number(e.target.value) as 0|1|2;setToneLevel(v);try{localStorage.setItem('catty-tone',String(v));}catch{}}}><option value={0}>Leve (mais didática)</option><option value={1}>Padrão (irônica e divertida)</option><option value={2}>Sem filtro (mais debochada)</option></select>
 <p>Personalidade: dá pra controlar aqui. Também dá pra pedir "pega mais leve" por voz.</p><p>Áudio processado em tempo real. Não gravado neste MVP. A IA pode cometer erros.</p><button className="text-button" onClick={()=>setSettingsOpen(false)}>Pronto</button></section></div>}
-</main>};createRoot(document.getElementById('root')!).render(<App/>);
+</main>};createRoot(document.getElementById('root')!).render(window.location.pathname.replace(/\/$/, '') === '/landing' ? <CattyLanding appUrl='/' /> : <App/>);

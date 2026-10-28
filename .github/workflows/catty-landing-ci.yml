@@ -1,0 +1,52 @@
+name: Catty landing — build and responsive smoke tests
+on:
+  pull_request:
+    paths:
+      - 'src/landing/**'
+      - 'src/main.tsx'
+      - '.github/workflows/catty-landing-ci.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Existing application tests
+        id: app_tests
+        continue-on-error: true
+        run: npm test
+      - name: Install browser for responsive screenshots
+        run: npx --yes playwright@1.56.1 install --with-deps chromium
+      - name: Start preview server
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/catty-vite.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:5173/landing >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/catty-vite.log
+          exit 1
+      - name: Capture desktop and mobile
+        run: |
+          mkdir -p artifacts
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,900" --full-page http://127.0.0.1:5173/landing artifacts/catty-desktop.png
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "390,844" --full-page http://127.0.0.1:5173/landing artifacts/catty-mobile.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catty-landing-screenshots
+          path: artifacts/
+      - name: Report application test status
+        if: always()
+        run: |
+          echo "Existing tests outcome: ${{ steps.app_tests.outcome }}"
+          if [ "${{ steps.app_tests.outcome }}" = "failure" ]; then
+            echo "::warning::Existing application tests failed; screenshots were still attempted."
+          fi
