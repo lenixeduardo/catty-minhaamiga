@@ -8,3 +8,64 @@ main.catty-site{display:block;max-width:none;margin:0;min-height:100svh;padding:
 .catty-site .catty-avatar img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
 .catty-site .catty-mic{font-size:0}
 @media(max-width:780px){.catty-site .catty-nav nav{display:none}.catty-site .catty-showcase-sticky .catty-avatar{height:155px}}
+
+/* Visual reconstruction V2 — scoped overrides, preserving the voice application. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@400;500;600;700;800&display=swap');
+html:has(.catty-site),body:has(.catty-site){height:auto!important;min-height:100%;overflow-x:clip}
+main.catty-site{height:auto!important;min-height:100vh!important;max-height:none!important;overflow:visible!important;display:block!important;width:100%;font-family:Inter,Arial,sans-serif}
+.catty-site h1,.catty-site h2,.catty-site h3{font-family:Sora,Inter,sans-serif;font-weight:750}
+.catty-site .catty-ambient{padding:34px 3.8vw 0;background:radial-gradient(ellipse at 82% 0%,#fcb19e 0%,transparent 41%),radial-gradient(ellipse at 7% 80%,#d75a7e 0%,transparent 48%),#43172f}
+.catty-site .catty-hero{max-width:1440px;min-height:820px;border-radius:36px 36px 0 0;padding:30px 6.3%;background:radial-gradient(ellipse at 75% 52%,#f68aa8 0%,transparent 35%),radial-gradient(ellipse at 55% 18%,#e6558b 0%,transparent 40%),linear-gradient(115deg,#2c1022 2%,#8c2c59 66%,#c94f76 100%);isolation:isolate}
+.catty-site .catty-hero::before{content:"";position:absolute;z-index:-1;inset:-15% -20% -20% 38%;background:radial-gradient(ellipse at 48% 42%,#ffd2b3 0%,#ff8a9f 23%,#ec65945c 43%,transparent 67%);filter:blur(38px);opacity:.87}
+.catty-site .catty-hero::after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(95deg,#230c1d85 0%,transparent 62%);pointer-events:none}
+.catty-site .catty-nav{position:relative;z-index:3}
+.catty-site .catty-hero-grid{min-height:720px;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:32px;position:relative}
+.catty-site .catty-hero-copy{position:relative;z-index:2}
+.catty-site .catty-hero h1{font-size:clamp(43px,4.65vw,72px);line-height:1.085;letter-spacing:-.06em;max-width:780px;text-wrap:balance}
+.catty-site .catty-lead{max-width:530px;font-size:16px;line-height:1.7}
+.catty-site .catty-hero-art{position:relative;display:grid;place-items:center;min-width:0;height:680px}
+.catty-site .catty-hero-halo{position:absolute;width:min(44vw,630px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe4c4b8,#ff9bb38c 38%,#ef5b8952 65%,transparent 74%);filter:blur(12px);transform:translate(2%,0)}
+.catty-site .catty-hero-art .catty-phone{z-index:1;width:340px;height:650px;transform:rotate(7deg) translateY(10px);box-shadow:0 35px 65px #21001b8a,0 0 50px #fbb9b955}
+.catty-site .catty-phone{border:9px solid #1b1920;border-radius:48px;padding:61px 20px 0;overflow:hidden}
+.catty-site .catty-phone-top b{font-family:Sora,Inter,sans-serif}
+.catty-site .catty-bubble{font-size:14px;line-height:1.4;margin-top:24px}
+.catty-site .catty-avatar{height:210px!important;margin-top:4px}
+.catty-site .catty-avatar img{width:100%;height:100%;object-fit:contain}
+.catty-site .catty-phone-tabs{font-size:11px}
+.catty-site .catty-dark-intro{padding:130px 20px}
+.catty-site .catty-showcase{height:270vh;min-height:1400px}
+.catty-site .catty-showcase-sticky{height:100vh;min-height:700px}
+.catty-site .catty-mobile-features{display:none}
+.catty-site .catty-steps,.catty-site .catty-examples,.catty-site .catty-faq{position:relative}
+@media(max-width:900px){
+  .catty-site .catty-ambient{padding:0}
+  .catty-site .catty-hero{padding:22px 6% 64px;border-radius:0;min-height:0}
+  .catty-site .catty-hero-grid{grid-template-columns:1fr;min-height:0;gap:28px;padding-top:65px}
+  .catty-site .catty-hero h1{font-size:clamp(39px,9vw,68px);line-height:1.09;letter-spacing:-.065em;max-width:680px}
+  .catty-site .catty-hero-art{height:530px}
+  .catty-site .catty-hero-halo{width:490px;max-width:110vw}
+  .catty-site .catty-hero-art .catty-phone{height:565px;width:295px;transform:rotate(4deg) scale(.91);transform-origin:center}
+  .catty-site .catty-hero .catty-lead{font-size:15px}
+  .catty-site .catty-showcase{display:none!important}
+  .catty-site .catty-mobile-features{display:block;background:#0d0a0f;color:#fff;padding:30px 6% 70px}
+  .catty-site .catty-mobile-feature{position:relative;max-width:560px;margin:0 auto 20px;padding:48px 22px 36px;border-radius:28px;background:radial-gradient(ellipse at 85% 5%,#7720476b,transparent 60%),#1b131d;border:1px solid #ffffff16;overflow:hidden}
+  .catty-site .catty-mobile-feature h2{font-size:clamp(28px,6.5vw,42px);line-height:1.15}
+  .catty-site .catty-mobile-feature p:not(.catty-kicker){color:#cbbec6;font-size:14px;line-height:1.6}
+  .catty-site .catty-mobile-feature-phone{height:380px;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;margin-top:20px}
+  .catty-site .catty-mobile-feature-phone .catty-phone{width:270px;height:540px;flex-shrink:0;transform:scale(.68);transform-origin:top center}
+  .catty-site .catty-mobile-feature-phone .catty-avatar{height:175px!important}
+  .catty-site .catty-feature-number{display:block;text-align:right;color:#f5a6c7;font-size:11px;letter-spacing:.12em}
+  .catty-site .catty-dark-intro{padding:85px 8%}
+}
+@media(max-width:500px){
+  .catty-site .catty-hero-grid{padding-top:48px}
+  .catty-site .catty-hero h1{font-size:clamp(36px,9.4vw,45px)}
+  .catty-site .catty-nav .catty-logo{font-size:26px}
+  .catty-site .catty-hero-art{height:465px}
+  .catty-site .catty-hero-art .catty-phone{transform:rotate(4deg) scale(.79);transform-origin:center}
+  .catty-site .catty-benefits{font-size:11px;gap:8px}
+  .catty-site .catty-benefits span{padding-right:8px}
+  .catty-site .catty-steps,.catty-site .catty-examples,.catty-site .catty-faq{padding:80px 7%}
+  .catty-site .catty-mobile-feature-phone{height:350px}
+}
+@media(prefers-reduced-motion:reduce){.catty-site .catty-phone{transform:none!important}}
