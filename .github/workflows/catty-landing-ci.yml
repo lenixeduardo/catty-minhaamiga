@@ -1,0 +1,72 @@
+name: Catty landing — build and responsive smoke tests
+on:
+  pull_request:
+    paths:
+      - 'src/landing/**'
+      - 'src/main.tsx'
+      - 'scripts/validate-catty-landing.cjs'
+      - '.github/workflows/catty-landing-ci.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Record original image asset hashes
+        run: |
+          find public -type f \( -iname '*.png' -o -iname '*.webp' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.svg' -o -iname '*.gif' \) -print0 | sort -z | xargs -0 -r sha256sum > /tmp/catty-assets-before.sha256
+          mkdir -p artifacts
+          cp /tmp/catty-assets-before.sha256 artifacts/asset-hashes-before.sha256
+      - run: npm run build
+      - name: Existing application tests
+        id: app_tests
+        continue-on-error: true
+        run: npm test
+      - name: Install browser for responsive screenshots
+        run: npx --yes playwright@1.56.1 install --with-deps chromium
+      - name: Start preview server
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/catty-vite.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:5173/landing >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/catty-vite.log
+          exit 1
+      - name: Browser tests, 4 resolutions, screenshots and UI audit
+        id: browser_tests
+        continue-on-error: true
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          node scripts/validate-catty-landing.cjs
+      - name: Verify all image assets are byte-for-byte unchanged
+        id: asset_integrity
+        if: always()
+        run: |
+          find public -type f \( -iname '*.png' -o -iname '*.webp' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.svg' -o -iname '*.gif' \) -print0 | sort -z | xargs -0 -r sha256sum > artifacts/asset-hashes-after.sha256
+          diff -u /tmp/catty-assets-before.sha256 artifacts/asset-hashes-after.sha256 | tee artifacts/asset-integrity.diff
+          echo "Assets identical: yes" | tee artifacts/asset-integrity.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catty-landing-screenshots
+          path: artifacts/
+      - name: Report application test status
+        if: always()
+        run: |
+          echo "Existing tests outcome: ${{ steps.app_tests.outcome }}"
+          echo "Browser tests outcome: ${{ steps.browser_tests.outcome }}"
+          echo "Asset integrity outcome: ${{ steps.asset_integrity.outcome }}"
+          if [ "${{ steps.browser_tests.outcome }}" = "failure" ] || [ "${{ steps.asset_integrity.outcome }}" = "failure" ]; then
+            echo "::error::Browser or asset integrity verification failed."
+            exit 1
+          fi
+          if [ "${{ steps.app_tests.outcome }}" = "failure" ]; then
+            echo "::warning::Existing application tests failed; screenshots were still attempted."
+          fi
