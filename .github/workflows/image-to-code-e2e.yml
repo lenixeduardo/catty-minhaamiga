@@ -1,0 +1,83 @@
+name: Image to Code — Catty E2E Homologation
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/image-to-code-e2e.yml'
+      - 'scripts/homologate-image-to-code.cjs'
+      - 'src/landing/**'
+      - 'tests/**'
+      - '.env.example'
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript + Vite production build
+        run: npm run build
+      - name: Existing automated tests (required)
+        id: existing
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts/e2e
+          npm test > artifacts/e2e/existing-tests.log 2>&1
+          result=$?
+          cat artifacts/e2e/existing-tests.log | tail -40
+          exit "$result"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start static Vite server for landing and app shell
+        run: |
+          npx vite --host 127.0.0.1 --port 5173 > /tmp/catty-e2e-vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:5173/landing >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/catty-e2e-vite.log
+          exit 1
+      - name: Catty E2E browser interactions and asset integrity
+        id: catty_browser
+        continue-on-error: true
+        run: node scripts/homologate-image-to-code.cjs
+      - name: Run upstream Image to Code skill scripts on captured reference
+        id: skill
+        continue-on-error: true
+        run: |
+          git clone --depth 1 https://github.com/lenixeduardo/Image-to-code.git /tmp/image-to-code
+          python -m pip install --user pillow jsonschema
+          ln -s "$PWD/node_modules" /tmp/image-to-code/node_modules
+          node /tmp/image-to-code/scripts/capture.mjs --url http://127.0.0.1:5173/landing --full-page --out artifacts/e2e/skill --smoke-widths 360,430,768,1024 --allow-warnings
+          python /tmp/image-to-code/scripts/image_inventory.py artifacts/e2e/mobile-viewport.png --out artifacts/e2e/catty-image-inventory.json
+          python /tmp/image-to-code/scripts/image_inventory.py artifacts/e2e/tablet-viewport.png --out artifacts/e2e/catty-tablet-inventory.json
+      - name: Archive tracked repo for independent local verification
+        run: |
+          mkdir -p artifacts/e2e
+          git archive --format=zip --output=artifacts/e2e/catty-tracked-source.zip HEAD
+          cp /tmp/catty-e2e-vite.log artifacts/e2e/vite.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catty-image-to-code-e2e
+          path: artifacts/e2e/
+          retention-days: 14
+      - name: Homologation gate
+        if: always()
+        run: |
+          echo "Existing tests: ${{ steps.existing.outcome }}"
+          echo "Catty browser: ${{ steps.catty_browser.outcome }}"
+          echo "Skill scripts: ${{ steps.skill.outcome }}"
+          if [ "${{ steps.existing.outcome }}" != success ] || [ "${{ steps.catty_browser.outcome }}" != success ] || [ "${{ steps.skill.outcome }}" != success ]; then
+            echo '::error::Full homologation not approved; inspect archived evidence.'
+            exit 1
+          fi
