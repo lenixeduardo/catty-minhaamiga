@@ -35,7 +35,13 @@ const path = require('node:path');
   });
   check(label+' no horizontal overflow',state.scrollWidth<=state.innerWidth+1,JSON.stringify({scrollWidth:state.scrollWidth,viewport:state.innerWidth}));
   check(label+' no broken visible images',state.images.every(i=>i.ok),JSON.stringify(state.images.filter(i=>!i.ok)));
-  if(width<=780)check(label+' no fallback image substitutions',!state.images.some(i=>i.src==='/catty.png'&&i.actual.includes('/catty.png')),JSON.stringify(state.images.filter(i=>i.actual.includes('/catty.png'))));
+  if(width<=780){
+   // Validate real tracked files, rather than mistaking the approved /catty.png asset for a fallback.
+   const source=fs.readFileSync('src/landing/CattyLanding.tsx','utf8');
+   const staticAssets=[...new Set([...source.matchAll(/src="(\/[^\"]+\.(?:png|webp|svg|jpe?g|avif))"/g)].map(match=>match[1]))];
+   const missing=staticAssets.filter(url=>!fs.existsSync(path.join('public',url.slice(1))));
+   check(label+' all local image sources exist',missing.length===0,JSON.stringify(missing));
+  }
   check(label+' no console/page/network errors',errors.length===0,JSON.stringify(errors));
   if(width<=780){
    check(label+' dark demo and chat visible',state.darkDemoVisible&&state.phoneVisible&&state.chatVisible,JSON.stringify({demo:state.darkDemoVisible,phone:state.phoneVisible,chat:state.chatVisible}));
