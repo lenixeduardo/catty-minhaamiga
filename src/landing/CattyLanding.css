@@ -266,3 +266,14 @@ main.catty-site{height:auto!important;min-height:100vh!important;max-height:none
   .cm-plan-art img,.cm-plan-art-alt img {mix-blend-mode:multiply}
   .cm-last>img {mix-blend-mode:multiply;filter:none}
 }
+
+/* Approved-source fidelity restoration — no generated or substituted character poses. */
+@media (max-width:780px) {
+  .cm-hero {background:radial-gradient(ellipse at 50% 16%, #f76c8e 0%, #7f2447 47%, transparent 75%), linear-gradient(155deg,#4c132a,#a33a59 52%,#461326);}
+  .cm-hero-cat {top:64px;left:50%;width:100%;max-width:480px;height:310px;object-fit:cover;object-position:center top;transform:translateX(-50%);filter:none;mix-blend-mode:normal;opacity:1;}
+  .cm-hero::after {background:linear-gradient(180deg,transparent 0%,transparent 26%,#360c20b0 39%,#330d22bf 61%,transparent 100%);}
+  .cm-hero-content {padding-top:246px;}
+  .cm-plan-art img,.cm-plan-art-alt img {width:100%;height:100%;object-fit:cover;object-position:center center;transform:none;mix-blend-mode:normal;filter:none;}
+  .cm-last>img {right:-16px;bottom:0;width:150px;height:160px;object-fit:cover;object-position:center top;mix-blend-mode:normal;filter:none;border-radius:20px;}
+  .cm-mini-phone>img {mix-blend-mode:normal;filter:none;}
+}
