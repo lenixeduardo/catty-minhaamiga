@@ -7,7 +7,7 @@ export function encodePcm(samples:Float32Array):string {
 type Handlers={speech?:(text:string)=>void;ready:()=>void;transcript:(who:'Catty'|'Você',text:string)=>void;talking:(value:boolean)=>void;turnEnded?:(interrupted:boolean)=>void;closed:()=>void;error:(message:string)=>void};
 export class GeminiVoice {
  private speech=new CattySpeechQueue();
- private context=new AudioContext({sampleRate:16000});
+ private context=new AudioContext({latencyHint:'interactive'});
  private socket:WebSocket|null=null;
  private media:MediaStream|null=null;
  private capture:AudioWorkletNode|null=null;
@@ -28,7 +28,6 @@ export class GeminiVoice {
   });
   await Promise.all([mediaTask,this.context.audioWorklet.addModule('/pcm-capture.js'),this.context.resume()]);
   if(this.disposed)return;
-  if(this.context.sampleRate!==16000)throw Error('Este navegador não suporta a captura de áudio em 16 kHz. Tente uma versão atual do Chrome ou Edge.');
   this.source=this.context.createMediaStreamSource(this.media!);
   this.capture=new AudioWorkletNode(this.context,'pcm-capture');
   this.source.connect(this.capture);this.capture.connect(this.context.destination);

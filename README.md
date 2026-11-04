@@ -122,3 +122,19 @@ Este projeto é privado.
 
 - [Google Gemini Live API](https://ai.google.dev/gemini-api/docs/live-api)
 - [Documentação do Google AI Studio](https://aistudio.google.com/)
+
+## Instalação PWA no celular
+
+A Catty agora inclui manifesto PWA, ícones gerados do mesmo arquivo original public/catty.png, service worker, modo standalone e botão Instalar app.
+
+- iPhone: abra a URL HTTPS no Safari → Compartilhar → Adicionar à Tela de Início → Abrir como App da Web → Adicionar.
+- Android: abra no Chrome → Instalar app (ou use o botão Instalar app da Catty quando o navegador oferecer o prompt).
+- Offline: a interface já visitada abre pelo cache; login, API e conversas por voz exigem internet. Tokens e áudio não são armazenados pelo service worker.
+- Produção: npm run build executa postbuild e cria ícones PNG 192, 512, maskable e Apple touch em dist/, sem modificar as imagens aprovadas.
+- Teste local do servidor de produção: npm ci && npm run build && NODE_ENV=production npm run server.
+
+### Publicação no Render (serviço Node com WebSocket)
+
+O arquivo render.yaml permite hospedar frontend, backend Express e Gemini Live no mesmo domínio. Configure GEMINI_API_KEY, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY diretamente no Render. Configure ALLOWED_ORIGINS com o host HTTPS público caso deseje uma allowlist explícita. Não inclua chaves no GitHub.
+
+A interface instalada não comprova voz em produção: teste permissão do microfone e conexão Gemini Live em dispositivos reais. O plano gratuito com suspensão por inatividade pode aumentar o tempo de inicialização.
