@@ -29,7 +29,7 @@ useEffect(()=>{
 },[]);
 useEffect(()=>{if(!accessReady||guestMode||!supabase)return;supabase.auth.getUser().then(({data})=>setUserId(data.user?.id||null));const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>setUserId(session?.user?.id||null));return()=>listener.subscription.unsubscribe()},[accessReady,guestMode]);
 
-const stop=()=>{starting.current=false;setConnecting(false);if(supabase&&sessionId.current){void supabase.from('practice_sessions').update({ended_at:new Date().toISOString()}).eq('id',sessionId.current);sessionId.current=null;}voice.current?.close();voice.current=null;setActive(false);setMuted(false);setTalking(false);setListening(false);setThinking(false);setStatus('Sessão encerrada')};useEffect(()=>()=>stop(),[]);
+const stop=()=>{starting.current=false;setConnecting(false);if(supabase&&sessionId.current){void supabase.from('learning_sessions').update({ended_at:new Date().toISOString()}).eq('id',sessionId.current);sessionId.current=null;}voice.current?.close();voice.current=null;setActive(false);setMuted(false);setTalking(false);setListening(false);setThinking(false);setStatus('Sessão encerrada')};useEffect(()=>()=>stop(),[]);
 const start=async()=>{if(starting.current||voice.current)return;starting.current=true;setConnecting(true);setError('');setStatus('Conectando ao Gemini…');let current:GeminiVoice|null=null;try{
  if(!navigator.onLine)throw Error('Você está offline. Conecte-se à internet para conversar com a Catty.');
  if(!navigator.mediaDevices?.getUserMedia)throw Error('Microfone indisponível: use HTTPS ou localhost.');
@@ -38,7 +38,7 @@ const start=async()=>{if(starting.current||voice.current)return;starting.current
  try{localStorage.setItem('catty-tone',String(toneLevel));}catch{}
  const response=await fetch('/api/realtime-token',{method:'POST',headers:{'Content-Type':'application/json',...(!guestMode?{Authorization:`Bearer ${auth.session!.access_token}`}:{})},body:JSON.stringify({level,toneLevel})});const payload=await response.json();if(!response.ok||!payload.value)throw Error(payload.error||'Não foi possível conectar ao Gemini.');
  if(voice.current!==current)return;
- if(!guestMode&&supabase&&auth.session){const {data:saved,error:saveError}=await supabase.from('practice_sessions').insert({user_id:auth.session!.user.id}).select('id').single();if(saveError)throw Error('Não foi possível salvar a sessão: '+saveError.message);if(voice.current!==current){void supabase.from('practice_sessions').update({ended_at:new Date().toISOString()}).eq('id',saved.id);return}sessionId.current=saved.id;}
+ if(!guestMode&&supabase&&auth.session){const {data:saved,error:saveError}=await supabase.from('learning_sessions').insert({user_id:auth.session!.user.id,level}).select('id').single();if(saveError)throw Error('Não foi possível salvar a sessão: '+saveError.message);if(voice.current!==current){void supabase.from('learning_sessions').update({ended_at:new Date().toISOString()}).eq('id',saved.id);return}sessionId.current=saved.id;}
  if(voice.current===current)await current.start(payload.value);
  }catch(e){if(voice.current===current){stop();setError(e instanceof Error?e.message:'Erro ao conectar');setStatus('Não conectada')}}};
 const toggleMute=()=>{const next=!muted;voice.current?.setMuted(next);setMuted(next)};
