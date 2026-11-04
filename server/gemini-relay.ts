@@ -38,7 +38,8 @@ export function attachGeminiRelay(server:Server,tickets:ReturnType<typeof create
     if(allowedOrigins.length>0){
       allowed=allowedOrigins.includes(originHost)||allowedOrigins.includes(origin);
     }else if(process.env.NODE_ENV==='production'){
-      allowed=false;
+      // Sem allowlist, somente a própria origem do app é autorizada.
+      allowed=originHost===reqHost;
     }else{
       const localHosts=['localhost:5173','127.0.0.1:5173','[::1]:5173','localhost:3000','127.0.0.1:3000',reqHost].filter(Boolean);
       allowed=localHosts.includes(originHost);

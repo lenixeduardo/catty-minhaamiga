@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'node:http';
+import { resolve } from 'node:path';
 import { createTickets, attachGeminiRelay } from './gemini-relay.js';
 import { createClient } from '@supabase/supabase-js';
 import { buildCattyCoreInstruction, type CattyToneLevel } from './prompts/catty-core.js';
@@ -103,6 +104,19 @@ app.post('/api/realtime-token',async(req,res)=>{
   res.setHeader('Cache-Control','no-store');
   res.json({provider:'gemini',value:tickets.issue(level, toneLevel),model:process.env.GEMINI_LIVE_MODEL||'gemini-2.5-flash-native-audio-preview-12-2025'});
 });
+// Render: frontend, API e WebSocket servidos na mesma origem HTTPS.
+if (process.env.NODE_ENV === 'production') {
+  const dist = resolve(process.cwd(), 'dist');
+  app.use(express.static(dist, {
+    index: false,
+    setHeaders(res, filePath) {
+      if (/\/(?:sw\.js|manifest\.webmanifest|index\.html)$/.test(filePath)) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
+  app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(resolve(dist, 'index.html')));
+}
 const server=createServer(app);
 attachGeminiRelay(server,tickets);
 server.on('error',(error:NodeJS.ErrnoException)=>{console.error(error.code==='EADDRINUSE'?'A porta '+(process.env.PORT||3001)+' já está ocupada. Encerre a instância anterior do Catty antes de executar npm run dev.':error.message);process.exit(1)});

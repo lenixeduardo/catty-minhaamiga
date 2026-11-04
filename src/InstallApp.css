@@ -1,0 +1,12 @@
+.catty-install-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:7px 12px;border:1px solid #ffdae5;border-radius:999px;background:#fff6fa;color:#bd2152;font-weight:700;font-size:12px;white-space:nowrap;box-shadow:none}
+.catty-install-button:hover{background:#ffeaf1}
+.catty-install-button:focus-visible,.catty-install-close:focus-visible,.catty-install-done:focus-visible{outline:3px solid #ff93b5;outline-offset:3px}
+.catty-install-overlay{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;background:#11182770;z-index:1000;padding:20px}
+.catty-install-sheet{position:relative;width:min(100%,430px);border-radius:24px;background:white;color:#1b1c27;padding:28px 26px max(28px,env(safe-area-inset-bottom));box-shadow:0 20px 70px #1b1c2733}
+.catty-install-sheet>img{width:60px;height:60px;object-fit:cover;border-radius:17px;background:#fff1f6}
+.catty-install-sheet h2{font-size:22px;line-height:1.2;margin:14px 0}
+.catty-install-sheet p{font-size:14px;line-height:1.55;color:#535765}
+.catty-install-sheet .catty-install-note{font-size:12px;color:#6b7180}
+.catty-install-close{position:absolute;right:16px;top:16px;background:#f5f5f8;border:0;border-radius:50%;width:35px;height:35px;display:grid;place-items:center}
+.catty-install-done{width:100%;background:#ff2568;color:#fff;border:0;border-radius:999px;padding:13px;margin-top:10px;font-weight:700}
+@media(max-width:480px){.catty-install-button{padding:8px 10px}.catty-install-overlay{padding:0}.catty-install-sheet{border-radius:24px 24px 0 0}.catty-install-sheet h2{font-size:20px}}

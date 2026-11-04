@@ -14,3 +14,6 @@
 @keyframes speech-appear{from{opacity:.8;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:759px){.speech-bubble{width:88%;padding:14px 18px}.speech-bubble p{font-size:16px;max-height:120px}}
 @media(prefers-reduced-motion:reduce){.speech-bubble{animation:none}}
+
+/* Safe areas para PWAs instalados no iOS e Android. */
+@supports (padding: env(safe-area-inset-bottom)) {main{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
